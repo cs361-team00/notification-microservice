@@ -1,6 +1,6 @@
 # notification-microservice
 
-Notification microservice for task/activity updates (User Story 1: notify on task completion). In-app channel only; email (Mailgun) added in User Story 2.
+Notification microservice for task/activity updates. In-app and email (Mailgun) channels.
 
 ## Run locally
 
@@ -11,7 +11,9 @@ Notification microservice for task/activity updates (User Story 1: notify on tas
    python3 -m pip install -r requirements.txt
    ```
 
-2. Start the server:
+2. For email, copy `.env.example` to `.env` and set `MAILGUN_API_KEY` and `MAILGUN_DOMAIN`.
+
+3. Start the server:
    ```bash
    python3 app.py
    ```
@@ -25,18 +27,19 @@ Send a notification when a task/activity is completed.
 
 **Request body (JSON):**
 
-| Field              | Required | Description                               |
-|--------------------|----------|-------------------------------------------|
-| `user_id`          | Yes      | ID of the user to notify                  |
-| `activity_id`      | Yes      | ID of the task or activity                |
-| `notification_type` | Yes    | e.g. `activity_completed`                 |
-| `channel`          | No       | Preferred channel(s); US1: `["in-app"]`   |
+| Field              | Required | Description                                        |
+|--------------------|----------|----------------------------------------------------|
+| `user_id`          | Yes      | ID of the user to notify                           |
+| `activity_id`      | Yes      | ID of the task or activity                         |
+| `notification_type` | Yes    | e.g. `activity_completed`                          |
+| `channel`          | No       | Preferred channel(s): `["email", "in-app"]`        |
+| `email`            | No       | Recipient email (required when using email channel) |
 
 **Example:**
 ```bash
 curl -X POST http://localhost:3000/api/send \
   -H "Content-Type: application/json" \
-  -d '{"user_id": 123, "activity_id": 456, "notification_type": "activity_completed", "channel": ["in-app"]}'
+  -d '{"user_id": 123, "activity_id": 456, "notification_type": "activity_completed", "channel": ["email", "in-app"], "email": "user@example.com"}'
 ```
 
 **Response (JSON):**

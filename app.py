@@ -1,4 +1,7 @@
-# POST /api/send for task-completion notifications (in-app for now)
+# POST /api/send for task-completion notifications
+from dotenv import load_dotenv
+load_dotenv()
+
 import logging
 from flask import Flask, request, jsonify
 
