@@ -59,8 +59,16 @@ On failure, `status` is `"failure"` and `error_message` contains the reason.
 
 Health check; returns `{"status": "ok"}`.
 
+### GET /users/<user_id>/preferences
+
+Return notification channel preferences for a user. Response: `{"email": true, "in-app": true}` (or false for disabled).
+
+### PATCH /users/<user_id>/preferences
+
+Update preferences. Body: `{"email": false, "in-app": true}`. Only known channels are applied. Returns updated preferences.
+
 ---
 
-## Teammate: Where to plug in (Preferences)
+## Teammate: Preferences storage
 
-User notification preferences are currently provided by a **stub** (all channels enabled for everyone). To persist and respect real preferences, implement `preferences/impl.py`: `get_enabled_channels(user_id: str) -> list[str]`. See `preferences/impl.py` and `send/orchestrator.py` for the contract.
+Preferences use `preferences/store.py` for persistence (in-memory by default). To persist with SQLite, replace the implementation in `store.py`; see **Teammate task: Persist preferences with SQLite** in `TEAM_SETUP.md`.

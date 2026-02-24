@@ -6,6 +6,7 @@ import logging
 from flask import Flask, request, jsonify
 
 from send.orchestrator import send_notification
+from preferences.impl import get_preferences, update_preferences
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,6 +51,23 @@ def api_send():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
+
+
+@app.route("/users/<user_id>/preferences", methods=["GET"])
+def get_user_preferences(user_id: str):
+    return jsonify(get_preferences(user_id)), 200
+
+
+@app.route("/users/<user_id>/preferences", methods=["PATCH"])
+def patch_user_preferences(user_id: str):
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+    except Exception:
+        return jsonify({"error": "Invalid JSON"}), 400
+    if not isinstance(data, dict):
+        return jsonify({"error": "Body must be a JSON object"}), 400
+    updated = update_preferences(user_id, data)
+    return jsonify(updated), 200
 
 
 if __name__ == "__main__":

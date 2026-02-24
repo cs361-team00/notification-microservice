@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 
 import config
-import preferences_stub as preferences
+import preferences.impl as preferences
 from send.channels import deliver
 
 logger = logging.getLogger(__name__)
