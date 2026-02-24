@@ -19,6 +19,73 @@ Notification microservice for task/activity updates. In-app and email (Mailgun) 
    ```
    Server listens on `http://0.0.0.0:3000` (set `PORT` to override).
 
+## How to request data from the microservice
+
+Send HTTP requests to the endpoints below. The client and service are separate—no direct calls, just HTTP.
+
+**Example — GET preferences:**
+```bash
+curl -X GET http://localhost:3000/users/1/preferences
+```
+
+**Example — POST send:**
+```bash
+curl -X POST http://localhost:3000/api/send \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 123, "activity_id": 456, "notification_type": "activity_completed"}'
+```
+
+Or run the test client (server must be up first):
+```bash
+python3 test_client.py
+```
+
+## How to receive data from the microservice
+
+Responses are JSON. Read the response body and parse it; status code tells you success (200) or error (4xx/5xx).
+
+**Example — preferences response:**
+```json
+{"email": true, "in-app": true}
+```
+
+**Example — in Python:**
+```python
+import requests
+resp = requests.get("http://localhost:3000/users/1/preferences")
+resp.raise_for_status()
+data = resp.json()
+print(data)
+```
+
+**Example — send response:**
+```json
+{
+  "status": "success",
+  "user_id": "123",
+  "activity_id": "456",
+  "notification_type": "activity_completed",
+  "timestamp": "2026-02-23T12:00:00Z",
+  "error_message": null
+}
+```
+
+## Request / response flow (UML sequence diagram)
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Microservice
+
+    Client->>+Microservice: request: GET /users/1/preferences
+    Microservice-->>-Client: response: 200, {email, in-app}
+
+    Client->>+Microservice: request: POST /api/send (JSON body)
+    Microservice-->>-Client: response: 200, {status, user_id, activity_id, ...}
+```
+
+Client and service talk over HTTP only.
+
 ## API
 
 ### POST /api/send
