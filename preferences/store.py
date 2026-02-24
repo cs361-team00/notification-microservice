@@ -1,24 +1,55 @@
-# persistence layer: replace with SQLite (see TEAM_SETUP.md for schema and steps)
-# add imports you need (e.g. json, os, sqlite3, config)
+import json
+import os
+import sqlite3
+import config
 
-_db_path = None  # TODO: read from os.environ.get("PREFERENCES_DB_PATH", "preferences.db")
-
+_db_path = os.environ.get("PREFERENCES_DB_PATH", "preferences.db")
 
 def _conn():
-    """Open SQLite connection, ensure table exists, return connection."""
-    # TODO: connect to _db_path, execute CREATE TABLE IF NOT EXISTS (see TEAM_SETUP.md schema), return connection
-    pass
-
+    conn = sqlite3.connect(_db_path)
+    conn.row_factory = sqlite3.Row
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            user_id TEXT PRIMARY KEY,
+            prefs_json TEXT NOT NULL DEFAULT '{}'
+        );
+    ''')
+    conn.commit()
+    return conn
 
 def load_preferences(user_id: str) -> dict[str, bool]:
-    # TODO: query row for user_id, get prefs_json
-    # TODO: if no row, return {}
-    # TODO: parse JSON, filter keys to config.SUPPORTED_CHANNELS, return dict[str, bool]
-    return {}  # remove once implemented: no saved prefs = use defaults
-
+    conn = _conn()
+    try:
+        cursor = conn.execute(
+            "SELECT prefs_json FROM user_preferences WHERE user_id =?", 
+            (str(user_id),)
+            )
+        row = cursor.fetchone()
+        if row:
+            raw_prefs = json.loads(row["prefs_json"])
+            return {
+                channel: is_enabled
+                for channel, is_enabled in raw_prefs.items()
+                if channel in config.SUPPORTED_CHANNELS
+            }
+        return()
+    finally:
+        conn.close
 
 def save_preferences(user_id: str, prefs: dict[str, bool]) -> None:
-    # TODO: filter prefs to only keys in config.SUPPORTED_CHANNELS
-    # TODO: serialize to JSON string
-    # TODO: INSERT OR REPLACE into user_preferences (user_id, prefs_json)
-    pass
+    filtered_prefs = {
+        channel: is_enabled
+        for channel, is_enabled in prefs.items()
+        if channel in config.SUPPORTED_CHANNELS
+    }
+    prefs_json = json.dumps(filtered_prefs)
+
+    conn = _conn()
+    try:
+        conn.execute('''
+            INSERT OR REPLACE INTO user_preferences (user_id, prefs_json)
+            VALUES (?, ?)
+        ''', (str(user_id), prefs_json))
+        conn.commit()
+    finally:
+        conn.close()
