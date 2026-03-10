@@ -13,13 +13,21 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+def parse_json_request_400(request):
+    """
+    Gets JSON data or returns a 400 error response
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        return data, None
+    except Exception:
+        return jsonify({"error": "Invalid JSON"}), 400
 
 @app.route("/api/send", methods=["POST"])
 def api_send():
-    try:
-        data = request.get_json(force=True, silent=True) or {}
-    except Exception:
-        return jsonify({"error": "Invalid JSON"}), 400
+    data, error = parse_json_request_400(request)
+    if error:
+        return error
 
     user_id = data.get("user_id")
     activity_id = data.get("activity_id")
@@ -60,10 +68,9 @@ def get_user_preferences(user_id: str):
 
 @app.route("/users/<user_id>/preferences", methods=["PATCH"])
 def patch_user_preferences(user_id: str):
-    try:
-        data = request.get_json(force=True, silent=True) or {}
-    except Exception:
-        return jsonify({"error": "Invalid JSON"}), 400
+    data, error = parse_json_request_400(request)
+    if error:
+        return error
     if not isinstance(data, dict):
         return jsonify({"error": "Body must be a JSON object"}), 400
     updated = update_preferences(user_id, data)
